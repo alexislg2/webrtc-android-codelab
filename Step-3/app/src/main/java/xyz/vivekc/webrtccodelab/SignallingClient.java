@@ -72,7 +72,7 @@ class SignallingClient {
             IO.setDefaultHostnameVerifier((hostname, session) -> true);
             IO.setDefaultSSLContext(sslcontext);
             //set the socket.io url here
-            socket = IO.socket("your_socket_io_instance_url_with_port");
+            socket = IO.socket("https://35.183.25.208:443");
             socket.connect();
             Log.d("SignallingClient", "init() called");
 

@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void getIceServers() {
-        //get Ice servers using xirsys
+        /*//get Ice servers using xirsys
         byte[] data = new byte[0];
         try {
             data = ("<xirsys_ident>:<xirsys_secret>").getBytes("UTF-8");
@@ -129,7 +129,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void onFailure(@NonNull Call<TurnServerPojo> call, @NonNull Throwable t) {
                 t.printStackTrace();
             }
-        });
+        });*/
+        peerIceServers.add(new PeerConnection.IceServer("stun:23.21.150.121"));
+        peerIceServers.add(new PeerConnection.IceServer("stun:stun.l.google.com:19302"));
     }
 
 
@@ -178,7 +180,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         localVideoTrack.addSink(localVideoView);
 
         localVideoView.setMirror(true);
-        remoteVideoView.setMirror(true);
+        remoteVideoView.setMirror(false);
 
         gotUserMedia = true;
         if (SignallingClient.getInstance().isInitiator) {
@@ -223,6 +225,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onIceCandidate(IceCandidate iceCandidate) {
                 super.onIceCandidate(iceCandidate);
+                Log.e("Vivek", iceCandidate.toString());
                 onIceCandidateReceived(iceCandidate);
             }
 

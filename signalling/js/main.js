@@ -8,11 +8,6 @@ var pc;
 var remoteStream;
 var turnReady;
 
-var pcConfig = {
-  'iceServers': [{
-    'url': 'stun:stun.l.google.com:19302'
-  }]
-};
 
 // Set up audio and video regardless of what devices are present.
 var sdpConstraints = {
@@ -24,14 +19,17 @@ var sdpConstraints = {
 
 /////////////////////////////////////////////
 
-var room = 'vivek17';
+var room = 'some_room_name';
 // Could prompt for room name:
- room = prompt('Enter room name:');
+//room = prompt('Enter room name:');
 
 //var socket = io.connect("http://172.245.132.132:1794");
 var socket = io.connect();
+console.log(1)
 if (room !== '') {
   socket.emit('create or join', room);
+  console.log(2)
+
   console.log('Attempted to create or  join room', room);
 }
 
@@ -52,6 +50,8 @@ socket.on('join', function (room){
 
 socket.on('joined', function(room) {
   console.log('joined: ' + room);
+console.log(2.5)
+
   isChannelReady = true;
 });
 
@@ -80,7 +80,8 @@ socket.on('message', function(message) {
     doAnswer();
   } else if (message.type === 'answer' && isStarted) {
     console.log("received answer");
-    pc.setRemoteDescription(new RTCSsseionDescription(message));
+    console.log(9)
+    pc.setRemoteDescription(new RTCSessionDescription(message));
     console.log(pc.getRemoteDescription());
   } else if (message.type === 'candidate' && isStarted) {
     var candidate = new RTCIceCandidate({
@@ -97,6 +98,7 @@ socket.on('message', function(message) {
 
 var localVideo = document.querySelector('#localVideo');
 var remoteVideo = document.querySelector('#remoteVideo');
+console.log(3)
 
 navigator.mediaDevices.getUserMedia({
   audio: true,
@@ -109,6 +111,7 @@ navigator.mediaDevices.getUserMedia({
 
 function gotStream(stream) {
   console.log('Adding local stream.');
+  console.log(4)
   localVideo.src = window.URL.createObjectURL(stream);
   localStream = stream;
   sendMessage('got user media');
@@ -123,13 +126,13 @@ var constraints = {
 
 console.log('Getting user media with constraints', constraints);
 
-if (location.hostname !== 'localhost') {
+/*if (location.hostname !== 'localhost') {
   requestTurn(
 //    'https://computeengineondemand.appspot.com/turn?username=41784574&key=4080218913'
     'https://service.xirsys.com/ice?ident=vivekchanddru&secret=ad6ce53a-e6b5-11e6-9685-937ad99985b9&domain=www.vivekc.xyz&application=default&room=testing&secure=1'
-  
+
 );
-}
+}*/
 
 function maybeStart() {
   console.log('>>>>>>> maybeStart() ', isStarted, localStream, isChannelReady);
@@ -153,7 +156,16 @@ window.onbeforeunload = function() {
 
 function createPeerConnection() {
   try {
-    pc = new RTCPeerConnection(null);
+    console.log("createPeerConnection");
+    console.log(5)
+    var config = {
+          iceServers: [
+            {"url": "stun:23.21.150.121"},
+            {"url": "stun:stun.l.google.com:19302"}
+          ]
+      };
+
+    pc = new RTCPeerConnection(config);
     pc.onicecandidate = handleIceCandidate;
     pc.onaddstream = handleRemoteStreamAdded;
     pc.onremovestream = handleRemoteStreamRemoved;
@@ -191,6 +203,7 @@ function handleCreateOfferError(event) {
 
 function doCall() {
   console.log('Sending offer to peer');
+  console.log(6)
   pc.createOffer(setLocalAndSendMessage, handleCreateOfferError);
 }
 
@@ -206,42 +219,17 @@ function setLocalAndSendMessage(sessionDescription) {
   // Set Opus as the preferred codec in SDP if Opus is present.
   //  sessionDescription.sdp = preferOpus(sessionDescription.sdp);
   pc.setLocalDescription(sessionDescription);
+  console.log(7)
   console.log('setLocalAndSendMessage sending message', sessionDescription);
   sendMessage(sessionDescription);
+  console.log(8)
 }
 
 function onCreateSessionDescriptionError(error) {
   trace('Failed to create session description: ' + error.toString());
 }
 
-function requestTurn(turnURL) {
-  var turnExists = false;
-  for (var i in pcConfig.iceServers) {
-    if (pcConfig.iceServers[i].url.substr(0, 5) === 'turn:') {
-      turnExists = true;
-      turnReady = true;
-      break;
-    }
-  }
-  if (!turnExists) {
-    console.log('Getting TURN server from ', turnURL);
-    // No TURN server. Get one from computeengineondemand.appspot.com:
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState === 4 && xhr.status === 200) {
-        var turnServer = JSON.parse(xhr.responseText);
-        console.log('Got TURN server: ', turnServer);
-        pcConfig.iceServers.push({
-          'url': 'turn:' + turnServer.username + '@' + turnServer.turn,
-          'credential': turnServer.password
-        });
-        turnReady = true;
-      }
-    };
-    xhr.open('GET', turnURL, true);
-    xhr.send();
-  }
-}
+
 
 function handleRemoteStreamAdded(event) {
   console.log('Remote stream added.');
